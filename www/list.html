@@ -1,0 +1,103 @@
+<ons-page>
+  <ons-toolbar>
+    <div class="center">社内アンケート</div>
+  </ons-toolbar>
+  <p>
+    <ons-list id="surveys">
+    </ons-list>
+  </p>
+  <script>
+    (() => {
+      // 画面表示時の処理
+      ons.getScriptPage().onShow = async function() {
+        // ログインしていない場合はログイン画面を表示
+        if (!(await loggedIn())) {
+          document.querySelector('#nav').pushPage('login.html');
+        }
+        // アンケート一覧を表示
+        showSurverys.bind(this)();
+      }
+
+      // ログイン判定
+      async function loggedIn() {
+        // ncmb.User.getCurrentUserがなければログインしていない
+        if (!ncmb.User.getCurrentUser()) return false;
+        try {
+          // セッションの有効性チェック
+          await ncmb.DataStore('Test').fetch();
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      // アンケート一覧を表示
+      async function showSurverys() {
+        // アンケート一覧を取得
+        this.surveys = await getSurvery();
+        // 自分の回答を取得
+        const answers = await getAnswers(this.surveys);
+        // 表示対象のDOM
+        const dom = this.querySelector('#surveys');
+        // HTMLを組み立て
+        const html = [];
+        this.surveys.forEach(survey => {
+          html.push(`
+            <ons-list-item modifier="chevron" tappable data-object-id="${survey.objectId}">
+              <div class="left">
+                ${answered(survey, answers)}
+              </div>
+              <div class="center">
+                <span class="list-item__title">
+                  ${survey.get('title')}
+                </span>
+                <span class="list-item__subtitle">${survey.get('body')}</span>
+              </div>
+            </ons-list-item>
+          `);
+        });
+        // HTMLを描画
+        dom.innerHTML = html.join('');
+        // 追加したDOMへイベントを設定
+        addEvent.bind(this)();
+      }
+
+      // アンケート一覧を取得
+      async function getSurvery() {
+        return await ncmb.DataStore('Survey')
+          .order('createDate', false)
+          .greaterThan('limitDate', new Date)
+          .fetchAll();
+      }
+
+      // アンケートに回答済みか判定
+      function answered(survey, answers) {
+        // 回答済みであれば true
+        const bol = answers.map(a => a.get('survey_id')).indexOf(survey.objectId) > -1;
+        // 表示アイコンを切り替える
+        return `<ons-icon icon="${bol ? 'fa-check' : 'fa-poll-h' }"></ons-icon>`;
+      }
+
+      // 自分が回答したアンケート内容を取得する
+      async function getAnswers(surveys) {
+        return await ncmb.DataStore('Answer')
+          // 対象は現在アクティブなアンケートのみ
+          .in('survey_id', surveys.map(s => s.objectId))
+          // 自分に書き込み権限があるデータを検索
+          .equalTo(`acl.${ncmb.User.getCurrentUser().objectId}.write`, true)
+          .fetchAll();
+      }
+
+      // 動的に追加したDOMにイベントを設定
+      function addEvent() {
+        // リストの項目を選択したら、アンケート画面に遷移する
+        this.querySelectorAll('ons-list-item').forEach(d => {
+          d.onclick = () => {
+            const survey = this.surveys.filter(s => s.objectId === d.dataset.objectId)[0];
+            document.querySelector('#nav').pushPage(survey.get('page'), { data: { survey }});
+          }
+        })
+      }
+    })();
+  </script>
+</ons-page>

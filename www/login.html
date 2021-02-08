@@ -1,0 +1,64 @@
+<ons-page>
+  <ons-toolbar>
+    <div class="center" id="form-title">新規登録/ログイン</div>
+  </ons-toolbar>
+  <div style="text-align: center; margin-top: 60px;">
+    <p>
+      <ons-input id="userName" modifier="underbar" placeholder="ユーザ名" float></ons-input>
+    </p>
+    <p>
+      <ons-input id="password" modifier="underbar" type="password" placeholder="パスワード" float></ons-input>
+    </p>
+    <p style="margin-top: 30px;">
+      <ons-button id="login">登録/ログイン</ons-button>
+    </p>
+  </div>
+
+  <script>
+    (() => {
+      // 画面初期化時の処理
+      ons.getScriptPage().onInit = async function() {
+        // ログインボタンを押した際のイベントを設定
+        this.querySelector('#login').onclick = login.bind(this);
+      }
+
+      /*
+        認証処理を実行
+      */
+      async function login() {
+        const userName = this.querySelector('#userName').value;
+        const password = this.querySelector('#password').value;
+        // すでに登録済みの場合はエラーになるので、try/catchでエラーを潰します
+        try {
+          await registerUser(userName, password);
+        } catch (e) {
+        }
+        try {
+          // ログイン処理です。
+          await ncmb.User.login(userName, password);
+          // ログインできたら日報入力画面に遷移します
+          document.querySelector('#nav').popPage();
+        } catch (e) {
+          // エラーの場合ID/パスワード不一致になります
+          ons.notification.alert('ログイン失敗しました。ユーザ名、パスワードを確認してください');
+          return false;
+        }
+      }
+
+      /*
+        新規ユーザ登録処理
+        引数：
+          displayName：文字列型。表示名
+          userName：文字列型。ユーザ名
+          password：文字列型。パスワード
+      */
+      async function registerUser(userName, password) {
+      const user = new ncmb.User();
+      user
+        .set('userName', userName)
+        .set('password', password);
+      await user.signUpByAccount();
+    }
+    })();
+  </script>
+</ons-page>

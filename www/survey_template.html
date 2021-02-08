@@ -1,0 +1,84 @@
+<ons-page>
+  <ons-toolbar>
+    <div class="left">
+      <ons-back-button>戻る</ons-back-button>
+    </div>
+    <div class="center survey-title"></div>
+  </ons-toolbar>
+  <div class="segment-area" style="display: none;">
+    <ons-segment id="segment" style="width: 180px">
+      <button>表示</button>
+      <button>レポート</button>
+    </ons-segment>
+  </div>
+  <ons-card>
+    <div class="content survey-body"></div>
+  </ons-card>
+  <p>
+    <form>
+      <!-- この中にアンケート項目を入力します -->
+      <p>
+        <ons-button id="submit" modifier="large">アンケートを送信する</ons-button>
+      </p>
+    </form>
+  </p>
+  <script>
+    (() => {
+      // 画面表示時の処理
+      ons.getScriptPage().onShow = async function() {
+        // アンケート内容の表示
+        showSurvey.bind(this)();
+        // セグメントの表示切り替え
+        viewSegment.bind(this)();
+      }
+
+      // セグメントの表示切り替え
+      // 管理者ならば表示。違うならば非表示
+      async function viewSegment() {
+        // 管理者かどうか取得
+        const admin = await isAdmin();
+        // 管理者であればセグメントを表示
+        this.querySelector('.segment-area').style.display = admin ? 'block' : 'none';
+        this.querySelector('#segment').setActiveButton(0);
+      }
+
+      // 画面初期化時の処理
+      ons.getScriptPage().onInit = async function() {
+        // アンケートを送信するボタンを押した時の処理
+        this.querySelector('#submit').onclick = submitSurvey.bind(this);
+
+        // セグメントを切り替える処理
+        this.querySelectorAll('#segment button').forEach((d, i) => {
+          d.onclick = () => changeView.bind(this)(i);
+        });
+      }
+
+      // アンケートを送信する処理
+      async function submitSurvey() {
+        // アンケート結果をNCMBに保存（app.jsに記載）
+        if (await saveSurvey.bind(this)()) {
+          // 結果を保存できた場合
+          ons.notification.alert('回答しました');
+          // 一覧ページに戻る
+          document.querySelector('#nav').popPage();
+        } else {
+          // 結果が保存できなかった場合
+          ons.notification.alert('エラーが発生しました');
+        }
+      }
+
+      // 表示切り替え処理
+      function changeView(index) {
+        if (index === 1) {
+          document.querySelector('#nav').pushPage('report.html', {data: {survey: this.data.survey}});
+        }
+      }
+    })();
+  </script>
+  <style>
+    .segment-area {
+      text-align: center;
+      padding-top: 10px;
+    }
+  </style>
+</ons-page>
