@@ -1,47 +1,160 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src * data: gap: https://ssl.gstatic.com; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'">
-  <script src="components/loader.js"></script>
-  <script src="lib/onsenui/js/onsenui.min.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src * data: gap: https://ssl.gstatic.com; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'">
+    <meta name="theme-color" content="#007aff">
+    <script src="components/loader.js"></script>
+    <script src="lib/onsenui/js/onsenui.min.js"></script>
+    <title>Survey-app</title>
 
-  <link rel="stylesheet" href="components/loader.css">
-  <link rel="stylesheet" href="lib/onsenui/css/onsenui.css">
-  <link rel="stylesheet" href="lib/onsenui/css/onsen-css-components.css">
-  <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="framework7/framework7-bundle.min.css">
+    <link rel="stylesheet" href="css/icons.css">
+    <link rel="stylesheet" href="css/framework7-icons.css">
+    <link rel="stylesheet" href="components/loader.css">
+    <link rel="stylesheet" href="lib/onsenui/css/onsenui.css">
+    <link rel="stylesheet" href="lib/onsenui/css/onsen-css-components.css">
+    <link rel="stylesheet" href="css/style.css">
 
-  <script>
-    // Page init event
-    document.addEventListener('init', function(event) {
-      var page = event.target;
+    <script>
 
-      if (page.matches('#first-page')) {
-
-        page.querySelector('#push-button').onclick = function() {
-          document.querySelector('#navigator').pushPage('page2.html');
-        };
-
-      } else if (page.matches('#second-page')) {
-
-        page.querySelector('#pop-button').onclick = function() {
-          document.querySelector('#navigator').popPage();
-        };
-
-      }
-    });
-
-    if (ons.platform.isIPhoneX()) {
-      document.documentElement.setAttribute('onsflag-iphonex-portrait', '');
-      document.documentElement.setAttribute('onsflag-iphonex-landscape', '');
-    }
-  </script>
+    </script>
 </head>
+
+
 <body>
-  <ons-navigator id="nav" page="list.html"></ons-navigator>
-  <script src="js/ncmb.min.js"></script>
-  <script src="js/serialize-0.2.min.js"></script>
-  <script src="js/app.js"></script>
+    <div id="app">
+        <!-- Status bar overlay for fullscreen mode-->
+        <div class="statusbar"></div>
+
+        <!-- Your main view/tab, should have "view-main" class. It also has "tab-active" class -->
+        <div id="view-home" class="view view-main view-init tab tab-active" data-name="view-home" data-url="/">
+            <div class="page" data-name="home">
+                <!-- Top Navbar -->
+                <div class="navbar">
+                    <div class="navbar-bg"></div>
+                    <div class="navbar-inner">
+                        <div class="navbar-inner sliding">
+                            <div class="left">
+                                <a href="#" class="margin-left" onclick="logout()">
+                                    <div><i class="icon f7-icons">square_arrow_left</i></div>
+                                </a>
+                            </div>
+                            <div class="title">社内アンケート</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-content">
+                    <div id="surveys"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Framework7 library -->
+    <script src="framework7/framework7-bundle.min.js"></script>
+    <script src="js/ncmb.min.js"></script>
+    <script src="js/serialize-0.2.min.js"></script>
+    <!-- App routes -->
+    <script src="js/routes.js"></script>
+    <script src="js/app.js"></script>
+    <script src="components/loader.js"></script>
+    <script src="js/company-meeting.js"></script>
+    <script>
+        (() => {
+            // 画面表示時の処理
+            window.onload = async function () {
+                // ログインしていない場合はログイン画面を表示
+                if (!(await loggedIn())) {
+                    app.views.main.router.navigate('/login/');
+                }
+                // アンケート一覧を表示
+                showSurveys.bind(this)();
+            }
+
+            // ログイン判定
+            async function loggedIn() {
+                // ncmb.User.getCurrentUserがなければログインしていない
+                if (!ncmb.User.getCurrentUser()) return false;
+                try {
+                    // セッションの有効性チェック
+                    await ncmb.DataStore('Test').fetch();
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            // アンケート一覧を表示
+            async function showSurveys() {
+                // アンケート一覧を取得
+                this.surveys = await getSurvey();
+                // 自分の回答を取得
+                const answers = await getAnswers(this.surveys);
+                // 表示対象のDOM
+                const dom = document.getElementById('surveys');
+                // HTMLを組み立て
+                const html = [];
+                this.surveys.forEach(survey => {
+                    html.push(`
+                <div class="survey-card card block block-strong inset display-flex row" data-object-id="${survey.objectId}">
+                    <div class="col-30 margin-left padding-top margin-top">${answered(survey, answers)}</div>
+                    <div class="col-70">
+                        <p>${survey.get('title')}</p>
+                        <p class="text-color-gray">${survey.get('body')}</p>
+                    </div>
+                </div>
+              `);
+                });
+                // HTMLを描画
+                dom.innerHTML = html.join('');
+                // 追加したDOMへイベントを設定
+                addEvent.bind(this)();
+            }
+
+            // アンケート一覧を取得
+            async function getSurvey() {
+                return await ncmb.DataStore('Survey')
+                    .order('createDate', false)
+                    .greaterThan('limitDate', new Date)
+                    .fetchAll();
+            }
+
+            // アンケートに回答済みか判定
+            function answered(survey, answers) {
+                // 回答済みであれば true
+                const bol = answers.map(a => a.get('survey_id')).indexOf(survey.objectId) > -1;
+                // 表示アイコンを切り替える
+                return `<i class="f7-icons">${bol ? 'checkmark' : 'chart_bar_alt_fill'}</i>`;
+                //return `<ons-icon icon="${bol ? 'fa-check' : 'fa-poll-h' }"></ons-icon>`;
+            }
+
+            // 自分が回答したアンケート内容を取得する
+            async function getAnswers(surveys) {
+                return await ncmb.DataStore('Answer')
+                    // 対象は現在アクティブなアンケートのみ
+                    .in('survey_id', surveys.map(s => s.objectId))
+                    // 自分に書き込み権限があるデータを検索
+                    .equalTo(`acl.${ncmb.User.getCurrentUser().objectId}.write`, true)
+                    .fetchAll();
+            }
+
+            // 動的に追加したDOMにイベントを設定
+            function addEvent() {
+                let surveyElements = document.getElementsByClassName("survey-card");
+                // リストの項目を選択したら、アンケート画面に遷移する
+                for (let i = 0; i < surveyElements.length; i++) {
+                    surveyElements[i].onclick = () => {
+                        openSurvey = this.surveys.filter(s => s.objectId === surveyElements[i].dataset.objectId)[0];
+                        app.views.main.router.navigate(openSurvey.get('page'));
+                    }
+                }
+            }
+        })();
+    </script>
 </body>
+
 </html>
