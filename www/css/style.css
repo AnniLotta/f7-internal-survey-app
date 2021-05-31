@@ -6,11 +6,6 @@
     font-size: large;
 }
 
-.button-inactive {
-    background-color: white;
-    color: #007aff;
-}
-
 .uppercase {
     text-transform: uppercase;
 }
