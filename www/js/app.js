@@ -6,6 +6,9 @@ var app = new Framework7({
   name: 'Survey app', // App name
   theme: 'auto', // Automatic theme detection
   el: '#app', // App root element
+  statusbar: {
+    enabled: false,
+  },
   // App routes
   routes: routes,
 });

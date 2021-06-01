@@ -1,19 +1,21 @@
 
 try {
     initFirebase(); // initialize Firebase    
-    console.log('Firebase initialized.')
+    console.log('Firebase initialized')
 } catch (e) {
-    console.log(e)
+    console.log("Error:", e)
     console.log('Firebase is not initialized.');
 }
 
-let loggedInUser = undefined;
+let loggedInUser = '';
 
 //Detect log in and log out
 firebase.auth().onAuthStateChanged(function (user) {
     if (user) {
         loggedInUser = user;
         app.views.main.router.back();
+        //app.views.main.router.navigate('/home/');
+        showSurveys();
     } else {
         loggedInUser = undefined;
         app.views.main.router.navigate('/login/');
@@ -23,11 +25,11 @@ firebase.auth().onAuthStateChanged(function (user) {
 //Checks if the current user is an admin
 function isAdmin() {
     db.collection('admins').onSnapshot((doc) => {
-      doc.docs.forEach((doc) => {
-          if(doc.data().email === loggedInUser?.email) userAdmin = true;
-      })
+        doc.docs.forEach((doc) => {
+            if (doc.data().email === loggedInUser?.email) userAdmin = true;
+        })
     });
-  }
+}
 
 //Logs in or creates a new account if it doesn't yet exist
 function tryLogin() {
@@ -44,7 +46,7 @@ function tryLogin() {
         })
         .catch((error) => {
             $$('p').show();
-            console.log(error);
+            console.log("Error in login:", error);
         });
 
 }
@@ -57,7 +59,7 @@ function login(email, password) {
             console.log("Signed in as ", user);
         })
         .catch((error) => {
-            console.log(error);
+            console.log("Error in login: ", error);
         });
 }
 
@@ -77,7 +79,7 @@ function createNewUser(email, password) {
             console.log("Signed in as ", user);
         })
         .catch((error) => {
-            console.log(error);
+            console.log("Error in creating a new user: ", error);
         });
 }
 
@@ -147,7 +149,6 @@ function showSurveys() {
             <div class="item-inner display-flex justify-content-center">There are no surveys in the database.</div>
           </div>`;
             }
-
             document.getElementById("surveys").innerHTML = result;
         });
     });
@@ -172,7 +173,7 @@ function submitAnswer() {
     let answer = app.form.convertToData('#survey-form');
     answer.answerer = loggedInUser.email;
     answer.survey_id = openSurvey.id;
-    if (!answered(openSurvey)) {
+    if (!answered(openSurvey.id)) {
         newAnswer(answer);
     } else {
         updateAnswer(answer);
@@ -200,11 +201,10 @@ function updateAnswer(answer) {
 
 function alertAfterSubmit(error) {
     if (error) {
-        console.log(error);
+        console.log("Error in submitting the survey:", error);
         app.dialog.alert('エラーが発生しました');
     } else {
-        app.dialog.alert('回答しました', function () {
-            app.views.main.router.back();
-        });
+        app.views.main.router.back();
+        app.dialog.alert('回答しました');
     }
 }

@@ -42,6 +42,7 @@
                                 </a>
                             </div>
                             <div class="title">社内アンケート</div>
+                            <div class="right"></div>
                         </div>
                     </div>
                 </div>
@@ -59,14 +60,12 @@
     <script src="https://www.gstatic.com/firebasejs/8.2.6/firebase-auth.js"></script>
     <!-- Framework7 library -->
     <script src="framework7/framework7-bundle.min.js"></script>
-    <script src="js/ncmb.min.js"></script>
     <script src="js/serialize-0.2.min.js"></script>
     <!-- App routes -->
     <script src="js/routes.js"></script>
     <script src="js/config.js"></script>
     <script src="js/database.js"></script>
     <script src="js/app.js"></script>
-    <script src="components/loader.js"></script>
     <script src="js/company-meeting.js"></script>
     <script>
         (() => {
@@ -75,10 +74,10 @@
                 setTimeout(function () {
                     if (!loggedInUser) {
                         app.views.main.router.navigate('/login/');
-                    } 
+                    }
                 }, 1000);
-                showSurveys();
                 isAdmin();
+                showSurveys();
             }
         })();
     </script>
