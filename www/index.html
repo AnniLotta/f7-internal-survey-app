@@ -70,11 +70,6 @@
         (() => {
             // 画面表示時の処理
             window.onload = async function () {
-                setTimeout(function () {
-                    if (!loggedInUser) {
-                        app.views.main.router.navigate('/login/');
-                    }
-                }, 1000);
                 isAdmin();
                 showSurveys();
             }

@@ -3,18 +3,17 @@ try {
     initFirebase(); // initialize Firebase    
     console.log('Firebase initialized')
 } catch (e) {
-    console.log("Error:", e)
+    console.log("Error: ", e)
     console.log('Firebase is not initialized.');
 }
 
-let loggedInUser = '';
+let loggedInUser = ''; //Data of the user that is logged in
 
 //Detect log in and log out
 firebase.auth().onAuthStateChanged(function (user) {
     if (user) {
         loggedInUser = user;
         app.views.main.router.back();
-        //app.views.main.router.navigate('/home/');
         showSurveys();
     } else {
         loggedInUser = undefined;
@@ -120,6 +119,7 @@ function showSurvey(surveyId) {
 
 //List all the surveys on the main page
 function showSurveys() {
+    //Save all the answers from the database to the allAnswers-variable
     db.collection('answers').onSnapshot((doc) => {
         allAnswers = [];
         doc.docs.forEach((doc) => {
@@ -127,6 +127,7 @@ function showSurveys() {
             allAnswers.push(answer)
         })
 
+        //Make an HTML from every survey
         db.collection('surveys').onSnapshot((doc) => {
             let result = '';
             doc.docs.forEach((doc) => {
@@ -143,12 +144,14 @@ function showSurveys() {
           `
             });
 
+            //If there are no surveys in the database
             if (isEmpty) {
                 result += `
           <div class="card-bg block block-strong inset">
             <div class="item-inner display-flex justify-content-center">There are no surveys in the database.</div>
           </div>`;
             }
+            
             document.getElementById("surveys").innerHTML = result;
         });
     });
