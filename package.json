@@ -14,7 +14,6 @@
         "framework7-icons": "^4.0.2",
         "merge": "^2.1.1",
         "monaca-plugin-monaca-core": "3.3.1",
-        "nw": "^0.54.0",
         "utf-8-validate": "^5.0.5"
     },
     "cordova": {
