@@ -1,5 +1,7 @@
 # Internal survey app using Framework7
 
+A post about creating the application [here](https://medium.com/the-web-tub/creating-a-survey-application-using-monaca-2c8ecca62ab8).
+
 ## Installation
 
 Clone the project and install it with these commands:
